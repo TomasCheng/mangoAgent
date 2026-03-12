@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import os
 import sys
 import json
-import os
+import time
+import tempfile
 from pathlib import Path
 
 # No more sys.path hacks needed if installed properly
@@ -35,6 +37,38 @@ from mangoAgent.tools.subagent_tools import get_subagent_tools
 
 from mangoAgent.core.memory_manager import MemoryManager
 from mangoAgent.tools.memory_tools import get_memory_tools
+
+def get_src_mtime():
+    """Get the maximum modification time of any .py file in the source directory."""
+    src_dir = Path(__file__).parent
+    max_mtime = 0
+    for root, _, files in os.walk(src_dir):
+        for f in files:
+            if f.endswith(".py"):
+                max_mtime = max(max_mtime, os.path.getmtime(Path(root) / f))
+    return max_mtime
+
+def save_state(history, staged_files):
+    """Save session state to a temporary file."""
+    state = {
+        "history": history,
+        "staged_files": [str(f) for f in staged_files]
+    }
+    with open(tempfile.gettempdir() + "/mango_session.json", "w") as f:
+        json.dump(state, f)
+
+def load_state():
+    """Load session state from a temporary file if it exists."""
+    path = Path(tempfile.gettempdir() + "/mango_session.json")
+    if path.exists():
+        try:
+            with open(path, "r") as f:
+                state = json.load(f)
+            path.unlink() # Delete after loading
+            return state["history"], [Path(f) for f in state["staged_files"]]
+        except:
+            return None, None
+    return None, None
 
 def main():
     # If in dev mode, we might want to print where we are running
@@ -159,6 +193,10 @@ def main():
         "For parallel or risky changes: create tasks, allocate worktree lanes, "
         "run commands in those lanes, then choose keep/remove for closeout. "
         "Use worktree_events when you need lifecycle visibility.\n"
+        "Editing Files:\n"
+        "- Use `read_file` with `line_numbers=true` to see precise line numbers.\n"
+        "- Use `replace_lines` for precise line-based editing.\n"
+        "- Use `patch_file` for complex changes using Unified Diff format.\n"
         "Prefer task_create/task_update/task_list for multi-step work. "
         "Use TodoWrite for short checklists.\n"
         "Use task (subagent) for delegation. Use load_skill for specialized knowledge.\n"
@@ -181,8 +219,13 @@ def main():
     )
 
     # REPL Loop
-    history = []
-    staged_files = []
+    history, staged_files = load_state()
+    if history is None:
+        history = []
+    if staged_files is None:
+        staged_files = []
+    
+    initial_mtime = get_src_mtime()
     tui.print_welcome()
     
     # Print mode info
@@ -221,6 +264,12 @@ def main():
         # REPL Commands
         if query.strip() in ("?", "/help"):
             tui.print_help()
+            continue
+
+        if query.strip() == "/reload":
+            tui.print_system_message("Saving session and reloading...")
+            save_state(history, staged_files)
+            os.execv(sys.executable, [sys.executable] + sys.argv)
             continue
 
         if query.strip() == "/compact":
@@ -288,6 +337,14 @@ def main():
         
         try:
             agent.run(history)
+            
+            # Check for self-edits (hot reload detection)
+            current_mtime = get_src_mtime()
+            if current_mtime > initial_mtime:
+                tui.print_system_message("Core files updated! Reloading to apply changes...")
+                save_state(history, staged_files)
+                os.execv(sys.executable, [sys.executable] + sys.argv)
+                
         except Exception as e:
             tui.print_error(str(e))
             # raise e # Uncomment for debugging

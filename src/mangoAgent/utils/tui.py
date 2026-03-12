@@ -206,6 +206,7 @@ class TUI:
         commands = [
             ("?, /help", "Show this help message"),
             ("/add", "Add file content to context (with path completion)"),
+            ("/reload", "Save session and restart Mango Agent (Hot Reload)"),
             ("/tasks", "List all git worktree tasks"),
             ("/team", "List status of all teammates"),
             ("/inbox", "Read messages in the lead inbox"),
