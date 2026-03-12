@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Optional
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -11,8 +12,9 @@ from rich.layout import Layout
 from rich.live import Live
 from rich.spinner import Spinner
 from rich.text import Text
-from prompt_toolkit import PromptSession
+from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.styles import Style
+from prompt_toolkit.completion import PathCompleter
 
 console = Console()
 
@@ -43,7 +45,7 @@ class TUI:
         welcome_text = (
             "[bold green]Mango Agent[/bold green] [yellow](Enhanced)[/yellow]\n"
             "An autonomous coding agent with git worktree isolation.\n\n"
-            "[dim]Type 'q' or 'exit' to quit, '/tasks' to list tasks.[/dim]"
+            "[dim]Type '?' for help, 'q' to exit.[/dim]"
         )
         
         # Combine them in a single panel
@@ -62,8 +64,25 @@ class TUI:
     def print_system_message(self, message: str):
         self.console.print(f"[bold cyan]System:[/bold cyan] {message}")
 
-    def print_user_message(self, message: str):
-        self.console.print(Panel(message, title="User", border_style="blue", title_align="left"))
+    def print_user_message(self, message: str, files: Optional[list[Path]] = None):
+        """Display user message with optional list of attached files."""
+        content = Group()
+        
+        # Add the text message
+        if message:
+            content.renderables.append(Text(message))
+            
+        # Add attached files section if any
+        if files:
+            if message:
+                content.renderables.append(Text("\n" + "─" * 20 + "\n", style="dim blue"))
+            
+            file_list = Text("📎 Attached Files:\n", style="bold cyan")
+            for f in files:
+                file_list.append(f"  • {f.name}\n", style="italic blue")
+            content.renderables.append(file_list)
+
+        self.console.print(Panel(content, title="User", border_style="blue", title_align="left"))
 
     def print_assistant_message(self, message: str):
         md = Markdown(message)
@@ -178,15 +197,55 @@ class TUI:
         )
         self.console.print(Panel(table, title="📊 Token Usage", border_style="blue", expand=False))
 
+    def print_help(self):
+        """Display help information with available commands."""
+        table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 2))
+        table.add_column("Command", style="bold yellow")
+        table.add_column("Description", style="dim")
+
+        commands = [
+            ("?, /help", "Show this help message"),
+            ("/add", "Add file content to context (with path completion)"),
+            ("/tasks", "List all git worktree tasks"),
+            ("/team", "List status of all teammates"),
+            ("/inbox", "Read messages in the lead inbox"),
+            ("/compact", "Manually compact conversation history"),
+            ("q, exit", "Quit Mango Agent"),
+        ]
+
+        for cmd, desc in commands:
+            table.add_row(cmd, desc)
+
+        self.console.print(Panel(
+            table,
+            title="❓ Available Commands",
+            border_style="cyan",
+            padding=(1, 2),
+            expand=False
+        ))
+
     def input_prompt(self) -> str:
         # Using prompt_toolkit for robust input handling, including:
         # - Proper CJK (wide character) support
         # - History navigation (up/down arrows)
         # - Advanced editing shortcuts
         
-        # The prompt method takes an HTML formatted string or list of (style, text) tuples.
-        # We can use the style dict we defined in __init__.
-        return self.session.prompt([('class:prompt', 'mango >> ')], style=self.style)
+        # We explicitly set completer=None to avoid "stickiness" from other prompts
+        return self.session.prompt(
+            [('class:prompt', 'mango >> ')], 
+            style=self.style,
+            completer=None
+        )
+
+    def input_file_path(self, message: str = "Select file: ") -> str:
+        """Interactive file path selection with autocompletion."""
+        completer = PathCompleter(expanduser=True)
+        # Use global prompt() instead of self.session.prompt() to avoid contaminating main session
+        return prompt(
+            [('class:prompt', message)],
+            style=self.style,
+            completer=completer
+        )
 
     def spinner(self, message: str):
         return self.console.status(f"[bold green]{message}[/bold green]", spinner="dots")

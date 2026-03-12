@@ -182,6 +182,7 @@ def main():
 
     # REPL Loop
     history = []
+    staged_files = []
     tui.print_welcome()
     
     # Print mode info
@@ -218,6 +219,10 @@ def main():
         last_interrupt_time = 0 # Reset exit trigger on valid input
             
         # REPL Commands
+        if query.strip() in ("?", "/help"):
+            tui.print_help()
+            continue
+
         if query.strip() == "/compact":
             if history:
                 tui.print_system_message("Compacting history...")
@@ -236,8 +241,50 @@ def main():
             print(json.dumps(bus.read_inbox("lead"), indent=2))
             continue
 
-        history.append({"role": "user", "content": query})
-        tui.print_user_message(query)
+        if query.strip() == "/add":
+            try:
+                path_str = tui.input_file_path("Path to add >> ")
+                if not path_str:
+                    continue
+                path = Path(path_str).expanduser().resolve()
+                if not path.exists():
+                    tui.print_error(f"File not found: {path_str}")
+                    continue
+                if not path.is_file():
+                    tui.print_error(f"Not a file: {path_str}")
+                    continue
+                
+                if path in staged_files:
+                    tui.print_system_message(f"`{path.name}` is already staged.")
+                else:
+                    staged_files.append(path)
+                    tui.print_system_message(f"Staged `{path.name}`. ({len(staged_files)} files total)")
+            except (EOFError, KeyboardInterrupt):
+                print()
+                continue
+            except Exception as e:
+                tui.print_error(f"Failed to stage file: {e}")
+            continue
+
+        # Prepare context with staged files
+        final_query = query
+        if staged_files:
+            file_contents = []
+            for f in staged_files:
+                try:
+                    content = f.read_text(encoding="utf-8")
+                    file_contents.append(f"<file_content path=\"{f}\">\n{content}\n</file_content>")
+                except Exception as e:
+                    tui.print_error(f"Could not read {f.name}: {e}")
+            
+            if file_contents:
+                final_query = f"{query}\n\n" + "\n\n".join(file_contents)
+
+        history.append({"role": "user", "content": final_query})
+        tui.print_user_message(query, files=staged_files)
+        
+        # Clear staged files after sending
+        staged_files = []
         
         try:
             agent.run(history)
