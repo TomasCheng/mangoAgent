@@ -197,6 +197,7 @@ def main():
         "- Use `read_file` with `line_numbers=true` to see precise line numbers.\n"
         "- Use `replace_lines` for precise line-based editing.\n"
         "- Use `patch_file` for complex changes using Unified Diff format.\n"
+        "- IMPORTANT: For large tasks, break down into multiple smaller files or implement core structure first, then refine in subsequent steps to avoid output truncation.\n"
         "Prefer task_create/task_update/task_list for multi-step work. "
         "Use TodoWrite for short checklists.\n"
         "Use task (subagent) for delegation. Use load_skill for specialized knowledge.\n"

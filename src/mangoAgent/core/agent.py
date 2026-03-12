@@ -91,12 +91,12 @@ class Agent:
 
                 # Use stream for real-time output
                 with self.client.messages.stream(
-                    model=self.model,
-                    system=self.system_prompt,
-                    messages=messages,
-                    tools=self.tools,
-                    max_tokens=8000,
-                ) as stream:
+                model=self.model,
+                system=self.system_prompt,
+                messages=messages,
+                tools=self.tools,
+                max_tokens=20000,
+            ) as stream:
                     # Handle all events in one unified loop
                     thinking_active = False
                     
@@ -154,11 +154,20 @@ class Agent:
                         
                         elif event.type == "content_block_stop":
                             if current_tool_name:
+                                try:
+                                    tool_input = json.loads(current_tool_input) if current_tool_input else {}
+                                except json.JSONDecodeError as e:
+                                    # If JSON is malformed (e.g. truncated by max_tokens), 
+                                    # try to recover or at least provide a better error
+                                    if thinking_content:
+                                        print(f"\n[Warning] Tool input JSON malformed. Likely reached max_tokens.")
+                                    tool_input = {"error": f"Malformed JSON: {e}", "partial_input": current_tool_input}
+                                
                                 tool_calls.append({
                                     "type": "tool_use",
                                     "id": current_tool_id,
                                     "name": current_tool_name,
-                                    "input": json.loads(current_tool_input) if current_tool_input else {}
+                                    "input": tool_input
                                 })
                                 current_tool_id = None
                                 current_tool_name = None

@@ -33,6 +33,21 @@ Built with Python and leveraging Large Language Models (LLMs) like Claude or Dee
     -   **Context Management**: Automatic and manual token management (`/compact`) to handle long conversations efficiently.
     -   **Directory Management**: Built-in tools for navigating and manipulating the workspace file system.
 
+### 🎥 Showcase
+
+Check out Mango Agent in action:
+
+**1. Startup & REPL Interface**
+![Mango Agent Startup](doc/media/agent-start.jpg)
+[Watch Startup Demo](doc/media/test.mov)
+
+**2. Autonomous Game Development**
+*Mango Agent generating a Snake Game:*
+![Snake Game Showcase](doc/media/agent-snake-game.jpg)
+[Watch Snake Game Demo](doc/media/agent-snake-game-show.mov)
+
+> 💡 **Tip**: The source code for this Dual Snake Game is available in the [showcase/snake-game](showcase/snake-game) directory. Feel free to try it out!
+
 ### Project Structure
 
 The project is structured to be easily understood and extended:
@@ -67,19 +82,17 @@ graph TD
 
 ```text
 mangoAgent/
-├── main.py                 # Entry point and REPL loop
-├── config.py               # Configuration and Environment setup
+├── run.py                  # Entry point (Development)
+├── install.sh              # Installation script
+├── doc/                    # Documentation and media
+│   ├── media/              # Images and videos
+│   └── ...                 # Other documentation files
 ├── core/                   # The Brain of the Agent
-│   ├── agent.py            # Main agent loop and lifecycle hooks
-│   ├── task_manager.py     # Task tracking and persistence
-│   ├── worktree_manager.py # Git worktree orchestration
-│   ├── teammate_manager.py # Multi-agent coordination
+│   ├── agent.py            # Main agent loop
 │   └── ...
 ├── tools/                  # The Hands of the Agent
-│   ├── base.py             # File system and shell tools
-│   ├── task_tools.py       # Task management tools
 │   └── ...
-└── work-space/             # The Playground (Agent's working directory)
+└── work-space/             # The Playground
 ```
 
 ### Installation (CLI)
@@ -184,6 +197,21 @@ Mango Agent（芒果智能体）是一个教育性质的开源项目，旨在引
     -   **上下文管理**：支持自动和手动的 Token 压缩（`/compact`），高效处理长对话。
     -   **目录管理**：内置完整的文件系统导航和操作工具，像在终端一样自由切换目录。
 
+### 🎥 效果展示
+
+查看 Mango Agent 的运行效果：
+
+**1. 启动与交互界面**
+![Mango Agent 启动界面](doc/media/agent-start.jpg)
+[观看启动演示视频](doc/media/test.mov)
+
+**2. 自主开发小游戏**
+*使用 Mango Agent 生成的双人贪吃蛇对战游戏：*
+![贪吃蛇游戏展示](doc/media/agent-snake-game.jpg)
+[观看贪吃蛇对战演示视频](doc/media/agent-snake-game-show.mov)
+
+> 💡 **提示**: 这个双人贪吃蛇游戏的源码就在 [showcase/snake-game](showcase/snake-game) 目录下，欢迎大家体验！
+
 ### 项目结构
 
 项目结构清晰，便于学习和扩展：
@@ -218,19 +246,17 @@ graph TD
 
 ```text
 mangoAgent/
-├── main.py                 # 程序入口和 REPL 循环
-├── config.py               # 配置加载与环境初始化
-├── core/                   # 智能体的大脑
-│   ├── agent.py            # 主智能体循环与生命周期钩子
-│   ├── task_manager.py     # 任务追踪与持久化
-│   ├── worktree_manager.py # Git worktree 编排
-│   ├── teammate_manager.py # 多智能体协作管理
+├── run.py                  # 运行入口 (开发模式)
+├── install.sh              # 安装脚本
+├── doc/                    # 项目文档与媒体
+│   ├── media/              # 图片与视频
+│   └── ...                 # 其他说明文档
+├── core/                   # 智能体大脑
+│   ├── agent.py            # 主运行循环
 │   └── ...
-├── tools/                  # 智能体的双手
-│   ├── base.py             # 文件系统与 Shell 工具
-│   ├── task_tools.py       # 任务管理工具
+├── tools/                  # 智能体双手
 │   └── ...
-└── work-space/             # 游乐场 (智能体的默认工作目录)
+└── work-space/             # 游乐场
 ```
 
 ### 安装 (命令行)

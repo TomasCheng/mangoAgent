@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Snake - Competitive Two-Player Snake Game</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="game-header">
+            <h1><i class="fas fa-gamepad"></i> DUAL SNAKE</h1>
+            <p class="subtitle">A Competitive Two-Player Snake Battle</p>
+        </header>
+        
+        <div class="game-area">
+            <div class="game-info">
+                <div class="player-card player1-card">
+                    <div class="player-header">
+                        <i class="fas fa-user-circle player-icon"></i>
+                        <h3>PLAYER 1</h3>
+                        <div class="snake-color" style="background-color: #ff4757;"></div>
+                    </div>
+                    <div class="player-stats">
+                        <div class="stat">
+                            <span class="stat-label">Score:</span>
+                            <span id="score1" class="stat-value">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Length:</span>
+                            <span id="length1" class="stat-value">3</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Speed:</span>
+                            <span id="speed1" class="stat-value">Normal</span>
+                        </div>
+                        <div class="controls">
+                            <h4>Controls:</h4>
+                            <div class="control-keys">
+                                <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="game-center">
+                    <div class="game-canvas-container">
+                        <canvas id="gameCanvas" width="800" height="600"></canvas>
+                        <div class="game-overlay" id="startOverlay">
+                            <h2>DUAL SNAKE</h2>
+                            <p>Get ready for a competitive snake battle!</p>
+                            <div class="instructions">
+                                <h3><i class="fas fa-info-circle"></i> How to Play</h3>
+                                <ul>
+                                    <li><strong>Player 1 (Red):</strong> Use <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move</li>
+                                    <li><strong>Player 2 (Blue):</strong> Use <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> arrow keys</li>
+                                    <li>Eat food to grow and earn points</li>
+                                    <li>Don't hit walls, yourself, or the other snake!</li>
+                                    <li>Power-ups give special abilities</li>
+                                </ul>
+                            </div>
+                            <button id="startButton" class="btn-primary">
+                                <i class="fas fa-play"></i> START BATTLE
+                            </button>
+                            <div class="game-modes">
+                                <button class="btn-mode active" data-mode="normal">Normal</button>
+                                <button class="btn-mode" data-mode="speed">Speed Mode</button>
+                                <button class="btn-mode" data-mode="survival">Survival</button>
+                            </div>
+                        </div>
+                        <div class="game-overlay" id="gameOverOverlay" style="display: none;">
+                            <h2>GAME OVER</h2>
+                            <p id="winnerText">Player 1 wins!</p>
+                            <div class="final-scores">
+                                <div class="final-score">
+                                    <h4>Player 1 Score</h4>
+                                    <p id="finalScore1">0</p>
+                                </div>
+                                <div class="final-score">
+                                    <h4>Player 2 Score</h4>
+                                    <p id="finalScore2">0</p>
+                                </div>
+                            </div>
+                            <button id="restartButton" class="btn-primary">
+                                <i class="fas fa-redo"></i> PLAY AGAIN
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="game-controls">
+                        <div class="powerup-display">
+                            <h3><i class="fas fa-bolt"></i> ACTIVE POWER-UPS</h3>
+                            <div id="powerupList" class="powerup-list">
+                                <!-- Power-ups will appear here -->
+                            </div>
+                        </div>
+                        <div class="game-timer">
+                            <h3><i class="fas fa-clock"></i> TIME</h3>
+                            <div id="timer" class="timer-display">02:00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="player-card player2-card">
+                    <div class="player-header">
+                        <i class="fas fa-user-circle player-icon"></i>
+                        <h3>PLAYER 2</h3>
+                        <div class="snake-color" style="background-color: #3742fa;"></div>
+                    </div>
+                    <div class="player-stats">
+                        <div class="stat">
+                            <span class="stat-label">Score:</span>
+                            <span id="score2" class="stat-value">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Length:</span>
+                            <span id="length2" class="stat-value">3</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Speed:</span>
+                            <span id="speed2" class="stat-value">Normal</span>
+                        </div>
+                        <div class="controls">
+                            <h4>Controls:</h4>
+                            <div class="control-keys">
+                                <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-footer">
+                <div class="food-counter">
+                    <h3><i class="fas fa-apple-alt"></i> FOOD EATEN</h3>
+                    <div class="food-stats">
+                        <div class="food-stat">
+                            <span class="food-color" style="background-color: #ff4757;"></span>
+                            <span>Player 1: <span id="food1">0</span></span>
+                        </div>
+                        <div class="food-stat">
+                            <span class="food-color" style="background-color: #3742fa;"></span>
+                            <span>Player 2: <span id="food2">0</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-status">
+                    <p id="statusMessage">Press START BATTLE to begin!</p>
+                </div>
+                <div class="action-buttons">
+                    <button id="pauseButton" class="btn-secondary">
+                        <i class="fas fa-pause"></i> PAUSE
+                    </button>
+                    <button id="soundToggle" class="btn-secondary">
+                        <i class="fas fa-volume-up"></i> SOUND ON
+                    </button>
+                    <button id="fullscreenButton" class="btn-secondary">
+                        <i class="fas fa-expand"></i> FULLSCREEN
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="powerup-guide">
+            <h3><i class="fas fa-star"></i> POWER-UP GUIDE</h3>
+            <div class="powerup-items">
+                <div class="powerup-item">
+                    <div class="powerup-icon" style="background-color: #ffd700;">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="powerup-desc">
+                        <strong>Speed Boost:</strong> Increases snake speed for 10 seconds
+                    </div>
+                </div>
+                <div class="powerup-item">
+                    <div class="powerup-icon" style="background-color: #32cd32;">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="powerup-desc">
+                        <strong>Invincibility:</strong> Can pass through walls for 5 seconds
+                    </div>
+                </div>
+                <div class="powerup-item">
+                    <div class="powerup-icon" style="background-color: #ff1493;">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                    </div>
+                    <div class="powerup-desc">
+                        <strong>Double Points:</strong> Doubles score from food for 15 seconds
+                    </div>
+                </div>
+                <div class="powerup-item">
+                    <div class="powerup-icon" style="background-color: #8a2be2;">
+                        <i class="fas fa-cut"></i>
+                    </div>
+                    <div class="powerup-desc">
+                        <strong>Snake Cut:</strong> Cuts opponent's snake in half
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
