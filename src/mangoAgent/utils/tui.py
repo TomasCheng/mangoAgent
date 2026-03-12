@@ -1,5 +1,6 @@
 import json
-from rich.console import Console
+from typing import Optional
+from rich.console import Console, Group
 from rich.panel import Panel
 from rich.markdown import Markdown
 from rich.syntax import Syntax
@@ -8,6 +9,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt
 from rich.layout import Layout
 from rich.live import Live
+from rich.spinner import Spinner
+from rich.text import Text
 from prompt_toolkit import PromptSession
 from prompt_toolkit.styles import Style
 
@@ -21,13 +24,39 @@ class TUI:
         self.style = Style.from_dict({
             'prompt': 'bold cyan',
         })
+        self._live: Optional[Live] = None
+        self._thinking_text = ""
+        self._response_text = ""
 
     def print_welcome(self):
-        self.console.print(Panel.fit(
+        # A more colorful version using rich's color tags
+        mango_art = (
+            "       [bold green]_[/bold green][bold green]..[/bold green][bold green].[/bold green][bold green]_[/bold green]\n"
+            "     [bold yellow].'[/bold yellow]     [bold yellow]'.[/bold yellow]\n"
+            "    [bold yellow]/  [/bold yellow][bold green]_[/bold green]      [bold yellow]\\\\[/bold yellow]\n"
+            "   [bold yellow]|  [/bold yellow][bold green](_)[/bold green]      [bold yellow]| [/bold yellow]\n"
+            "    [bold yellow]\\\\        / [/bold yellow]\n"
+            "     [bold yellow]'.____.' [/bold yellow]"
+        )
+        
+        # Create a more integrated welcome message
+        welcome_text = (
             "[bold green]Mango Agent[/bold green] [yellow](Enhanced)[/yellow]\n"
-            "An autonomous coding agent with git worktree isolation.",
+            "An autonomous coding agent with git worktree isolation.\n\n"
+            "[dim]Type 'q' or 'exit' to quit, '/tasks' to list tasks.[/dim]"
+        )
+        
+        # Combine them in a single panel
+        content = Table.grid(padding=1)
+        content.add_column(justify="center")
+        content.add_column(justify="left", vertical="middle")
+        content.add_row(mango_art.strip(), welcome_text)
+        
+        self.console.print(Panel(
+            content,
             title="🥭 Welcome",
-            border_style="green"
+            border_style="green",
+            padding=(1, 2)
         ))
 
     def print_system_message(self, message: str):
@@ -49,6 +78,85 @@ class TUI:
         # Truncate if too long
         display_result = result[:500] + "... (truncated)" if len(result) > 500 else result
         self.console.print(Panel(display_result, title="✅ Result", border_style="dim white", title_align="left"))
+
+    def start_thinking(self):
+        """Start a live display for thinking process."""
+        self._thinking_text = ""
+        self._live = Live(
+            self._render_thinking(),
+            console=self.console,
+            refresh_per_second=10,
+            transient=False # Keep it visible after thinking
+        )
+        self._live.start()
+
+    def _render_thinking(self):
+        """Render the thinking block with spinner and text inside a panel."""
+        spinner = Spinner("dots", text=Text("Thinking...", style="bold magenta"))
+        content = Text(self._thinking_text, style="dim italic white")
+        return Panel(
+            Group(spinner, content),
+            title="🤔 Reasoning",
+            border_style="magenta",
+            title_align="left"
+        )
+
+    def print_thinking_chunk(self, text: str):
+        """Update the thinking process text."""
+        self._thinking_text += text
+        if self._live:
+            self._live.update(self._render_thinking())
+
+    def stop_thinking(self):
+        """Finalize thinking and prepare for response."""
+        if self._live:
+            # Update one last time without the spinner
+            final_content = Panel(
+                Text(self._thinking_text, style="dim italic white"),
+                title="🤔 Reasoning (Finished)",
+                border_style="dim magenta",
+                title_align="left"
+            )
+            self._live.update(final_content)
+            self._live.stop()
+            self._live = None
+        self.console.print() # Spacer
+
+    def start_responding(self):
+        """Start a live display for assistant response."""
+        self._response_text = ""
+        self._live = Live(
+            self._render_response(),
+            console=self.console,
+            refresh_per_second=10,
+            transient=False
+        )
+        self._live.start()
+
+    def _render_response(self):
+        """Render the assistant response block."""
+        return Panel(
+            Markdown(self._response_text),
+            title="Mango",
+            border_style="green",
+            title_align="left"
+        )
+
+    def print_stream_chunk(self, text: str):
+        """Update the assistant response text."""
+        self._response_text += text
+        if self._live:
+            self._live.update(self._render_response())
+        else:
+            # Fallback for raw streaming if start_responding wasn't called
+            self.console.print(text, end="")
+
+    def stop_responding(self):
+        """Finalize response display."""
+        if self._live:
+            self._live.stop()
+            self._live = None
+        self.console.print()
 
     def print_error(self, error: str):
         self.console.print(f"[bold red]Error:[/bold red] {error}")

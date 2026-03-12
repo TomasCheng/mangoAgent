@@ -255,3 +255,54 @@ class WorktreeManager:
             },
         )
         return json.dumps(kept, indent=2) if kept else f"Error: Unknown worktree '{name}'"
+
+    def merge(self, name: str, branch: str = None) -> str:
+        """Merge the worktree branch into the current HEAD of the main repo."""
+        wt = self._find(name)
+        if not wt:
+            return f"Error: Unknown worktree '{name}'"
+
+        target_branch = wt.get("branch")
+        if not target_branch:
+             return f"Error: Worktree '{name}' has no associated branch"
+
+        # Check if main repo is clean to avoid merge issues
+        status = self._run_git(["status", "--porcelain"])
+        if status.strip():
+             return "Error: Main repository has uncommitted changes. Please commit or stash them before merging."
+
+        try:
+            # Fetch from the worktree to ensure we have the latest commit ref?
+            # Actually, worktrees share the same .git, so refs are local.
+            # We just need to merge the branch.
+            
+            self.events.emit(
+                "worktree.merge.before",
+                task={"id": wt.get("task_id")} if wt.get("task_id") is not None else {},
+                worktree={"name": name, "branch": target_branch},
+            )
+
+            # Perform the merge
+            # We use --no-ff to create a merge commit, preserving history
+            self._run_git(["merge", "--no-ff", target_branch])
+            
+            self.events.emit(
+                "worktree.merge.after",
+                task={"id": wt.get("task_id")} if wt.get("task_id") is not None else {},
+                worktree={"name": name, "branch": target_branch, "status": "merged"},
+            )
+            return f"Successfully merged branch '{target_branch}' into HEAD."
+        except RuntimeError as e:
+            # Attempt to abort the merge if it failed (e.g. conflicts)
+            try:
+                self._run_git(["merge", "--abort"])
+            except Exception:
+                pass
+            
+            self.events.emit(
+                "worktree.merge.failed",
+                task={"id": wt.get("task_id")} if wt.get("task_id") is not None else {},
+                worktree={"name": name, "branch": target_branch},
+                error=str(e),
+            )
+            return f"Merge failed (and aborted): {e}"

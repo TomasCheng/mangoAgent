@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 from anthropic import Anthropic
 from dotenv import load_dotenv
@@ -24,21 +25,82 @@ else:
     # CLI Mode
     WORKDIR = Path.cwd()
     
-    # Load .env from CWD if present (for user convenience)
+    # Load configuration in priority order:
+    # 1. ~/.mango/config (Global)
+    # 2. Current directory .env (Project specific)
+    
+    global_config = Path.home() / ".mango" / "config"
+    if global_config.exists():
+        load_dotenv(global_config, override=True)
+        
     load_dotenv(WORKDIR / ".env", override=True)
-    # Also try loading from ~/.mango/config if needed later
 
 if not WORKDIR.exists():
-    # Only create if it doesn't exist? Or let main handle it?
-    # In CLI mode, we don't want to mkdir unless we are initializing.
-    # But for now, let's stick to existing behavior: ensure it exists.
-    # Wait, if I run `mango` in `/`, I can't mkdir.
-    # Better to let main() handle critical failures or user confirmation.
-    # But for now, to keep it simple and working:
     try:
         WORKDIR.mkdir(parents=True, exist_ok=True)
     except PermissionError:
-        pass # Will likely fail later if we can't write, but let it slide here.
+        pass 
+
+# --- Configuration Management ---
+# We now support loading JSON configs in addition to .env variables.
+# Order of precedence (Higher overwrites lower):
+# 1. Default Hardcoded Values
+# 2. Global Config (~/.mango/config.json)
+# 3. Project Config (WORKDIR/.mango/config.json) - Not yet standard but good to support
+# 4. Environment Variables (.env) - Highest priority for sensitive keys usually, 
+#    but for structural config, maybe JSON is better?
+#    Let's stick to: JSON provides structural defaults, ENV overrides specific keys.
+
+DEFAULTS = {
+    "system_prompt_override": None,
+    "model_override": None,
+    "auto_compact_threshold": 100000,
+    "log_level": "INFO",
+    "use_reasoning": True  # Default to True for reasoning capabilities
+}
+
+def load_json_config(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        # Filter out null values to avoid overwriting defaults with null
+        return {k: v for k, v in data.items() if v is not None}
+    except Exception as e:
+        print(f"Warning: Failed to load config from {path}: {e}")
+        return {}
+
+def get_config() -> dict:
+    """
+    Load and merge configuration from all sources.
+    Returns a dict with the final configuration.
+    """
+    config = DEFAULTS.copy()
+    
+    # 1. Global JSON Config
+    global_json = Path.home() / ".mango" / "config.json"
+    config.update(load_json_config(global_json))
+    
+    # 2. Project JSON Config (Optional, if we want per-project settings)
+    # project_json = WORKDIR / ".mango" / "config.json"
+    # config.update(load_json_config(project_json))
+    
+    # 3. Environment Variables (Map specific env vars to config keys)
+    # This allows .env to override JSON config for critical values
+    if os.getenv("MODEL_ID"):
+        config["model_override"] = os.getenv("MODEL_ID")
+    
+    if os.getenv("USE_REASONING"):
+        val = os.getenv("USE_REASONING").lower()
+        config["use_reasoning"] = val in ("true", "1", "yes", "on")
+        
+    # Add other env mappings as needed
+    
+    return config
+
+# Load config once at module level? Or per call?
+# Per call allows dynamic updates if file changes, but slightly slower.
+# Let's do per call for get_model/get_client where it matters.
 
 def get_client():
     """
@@ -58,6 +120,26 @@ def get_client():
 
 def get_model():
     """
-    Get model ID, default to deepseek-chat.
+    Get model ID.
+    Priority:
+    1. Env var MODEL_ID (loaded from .env)
+    2. Config JSON 'model_override'
+    3. Logic based on 'use_reasoning' config:
+       - If use_reasoning is True -> deepseek-reasoner
+       - Else -> deepseek-chat
     """
-    return os.environ.get("MODEL_ID", "deepseek-chat")
+    # Check Env first (highest priority for simple overrides)
+    env_model = os.environ.get("MODEL_ID")
+    if env_model:
+        return env_model
+        
+    # Check JSON config
+    conf = get_config()
+    if conf.get("model_override"):
+        return conf["model_override"]
+    
+    # Default logic based on reasoning preference
+    if conf.get("use_reasoning", True):
+        return "deepseek-reasoner"
+        
+    return "deepseek-chat"

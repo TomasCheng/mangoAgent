@@ -72,6 +72,17 @@ def get_worktree_tools(worktrees: WorktreeManager, events: EventBus):
                 "properties": {"limit": {"type": "integer"}},
             },
         },
+        {
+            "name": "worktree_merge",
+            "description": "Merge a worktree branch back into the main repository's current branch.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                },
+                "required": ["name"],
+            },
+        },
     ]
 
     handlers = {
@@ -82,6 +93,7 @@ def get_worktree_tools(worktrees: WorktreeManager, events: EventBus):
         "worktree_keep": lambda **kw: worktrees.keep(kw["name"]),
         "worktree_remove": lambda **kw: worktrees.remove(kw["name"], kw.get("force", False), kw.get("complete_task", False)),
         "worktree_events": lambda **kw: events.list_recent(kw.get("limit", 20)),
+        "worktree_merge": lambda **kw: worktrees.merge(kw["name"]),
     }
 
     return tools, handlers

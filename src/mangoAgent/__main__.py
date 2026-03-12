@@ -193,16 +193,29 @@ def main():
     if not worktrees.git_available:
         tui.print_error("Workspace is not in a git repo. worktree_* tools will be unavailable.")
         
+    last_interrupt_time = 0
+    import time
+
     while True:
         try:
             query = tui.input_prompt()
         except (EOFError, KeyboardInterrupt):
-            break
+            current_time = time.time()
+            if current_time - last_interrupt_time < 3: # 3 seconds window
+                tui.print_system_message("Goodbye! 🥭")
+                sys.exit(0)
+            else:
+                tui.print_system_message("Press Ctrl+C again within 3 seconds to exit Mango Agent.")
+                last_interrupt_time = current_time
+                continue
             
         if query.strip().lower() in ("q", "exit"):
+            tui.print_system_message("Goodbye! 🥭")
             break
         if query.strip() == "":
             continue
+            
+        last_interrupt_time = 0 # Reset exit trigger on valid input
             
         # REPL Commands
         if query.strip() == "/compact":
