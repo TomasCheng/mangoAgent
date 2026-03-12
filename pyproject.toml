@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mangoAgent"
+version = "0.1.0"
+description = "An autonomous coding agent with git worktree isolation"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic",
+    "python-dotenv",
+    "rich",
+    "prompt_toolkit",
+    "anyio",
+    "httpx"
+]
+readme = "README.md"
+authors = [
+    {name = "lance.cheng", email = "lance.cheng@testmail.com"}
+]
+
+[project.scripts]
+mango = "mangoAgent.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

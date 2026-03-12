@@ -1,0 +1,15 @@
+# PDF Generation Skill Requirements
+# Required for Chinese PDF generation with ReportLab
+
+reportlab>=3.6.0
+# Optional dependencies for advanced features
+# markdown>=3.4.0
+# pillow>=9.0.0
+
+# Note: Standard library dependencies
+# - os, sys, datetime, tempfile (included in Python)
+
+# Platform-specific font requirements:
+# macOS: System fonts included (PingFang, STHeiti)
+# Windows: Install Chinese fonts from Microsoft
+# Linux: Install fonts-wqy-microhei or fonts-noto-cjk
