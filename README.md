@@ -39,12 +39,12 @@ Check out Mango Agent in action:
 
 **1. Startup & REPL Interface**
 ![Mango Agent Startup](doc/media/agent-start.jpg)
-[Watch Startup Demo](doc/media/test.mov)
+![Startup Demo](doc/media/test.gif)
 
 **2. Autonomous Game Development**
 *Mango Agent generating a Snake Game:*
 ![Snake Game Showcase](doc/media/agent-snake-game.jpg)
-[Watch Snake Game Demo](doc/media/agent-snake-game-show.mov)
+![Snake Game Demo](doc/media/agent-snake-game-show.gif)
 
 > 💡 **Tip**: The source code for this Dual Snake Game is available in the [showcase/snake-game](showcase/snake-game) directory. Feel free to try it out!
 
@@ -203,12 +203,12 @@ Mango Agent（芒果智能体）是一个教育性质的开源项目，旨在引
 
 **1. 启动与交互界面**
 ![Mango Agent 启动界面](doc/media/agent-start.jpg)
-[观看启动演示视频](doc/media/test.mov)
+![启动演示](doc/media/test.gif)
 
 **2. 自主开发小游戏**
 *使用 Mango Agent 生成的双人贪吃蛇对战游戏：*
 ![贪吃蛇游戏展示](doc/media/agent-snake-game.jpg)
-[观看贪吃蛇对战演示视频](doc/media/agent-snake-game-show.mov)
+![贪吃蛇对战演示](doc/media/agent-snake-game-show.gif)
 
 > 💡 **提示**: 这个双人贪吃蛇游戏的源码就在 [showcase/snake-game](showcase/snake-game) 目录下，欢迎大家体验！
 
